@@ -22,51 +22,9 @@
         <div id="games-container">
             <h2>Games</h2>
             <div id="games" class="games-grid">
-                <p id="games-loading">Loading games…</p>
+                <button class="game-btn" onclick="location.href='games/minecraft/minecraft.html'">Minecraft</button>
             </div>
         </div>
     </div>
-
-    <script>
-    (async function(){
-        const listEl = document.getElementById('games');
-        const loadingEl = document.getElementById('games-loading');
-        try {
-            // Try a static manifest first (for GitHub Pages).
-            let games = null;
-            try {
-                const res = await fetch('games.json');
-                if (res.ok) games = await res.json();
-            } catch (e) {
-                // ignore and try API fallback
-            }
-            // Fallback to local server API if manifest not present
-            if (!games) {
-                const res2 = await fetch('/api/games');
-                if (res2.ok) games = await res2.json();
-            }
-
-            if (loadingEl) loadingEl.remove();
-            if (!games || games.length === 0) {
-                listEl.textContent = 'No games found in the /games folder.';
-                return;
-            }
-            games.forEach(g => {
-                const btn = document.createElement('button');
-                btn.className = 'game-btn';
-                btn.textContent = g.name || g.id;
-                btn.addEventListener('click', () => {
-                    // Use relative navigation so GitHub Pages serves correctly
-                    window.location.href = 'games/' + encodeURIComponent(g.id) + '/';
-                });
-                listEl.appendChild(btn);
-            });
-        } catch (err) {
-            if (loadingEl) loadingEl.remove();
-            listEl.textContent = 'Error loading games: ' + err.message;
-            console.error(err);
-        }
-    })();
-    </script>
 </body>
 </html>
