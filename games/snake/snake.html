@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Snake Game - Dark Mode</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            background: #181818;
+            color: #eee;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        h1 {
+            margin-top: 32px;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+        #gameContainer {
+            background: #222;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px #000a;
+            padding: 24px;
+            margin-top: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #gameCanvas {
+            background: #181818;
+            border: 2px solid #444;
+            border-radius: 8px;
+            display: block;
+        }
+        #score, #modeSelect {
+            margin: 16px 0 0 0;
+            font-size: 1.2em;
+        }
+        #modeSelect select {
+            background: #222;
+            color: #eee;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 1em;
+        }
+        #restartBtn {
+            margin-top: 16px;
+            background: #333;
+            color: #eee;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 16px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        #restartBtn:hover {
+            background: #444;
+        }
+        #gameOver {
+            color: #ff5555;
+            font-size: 1.5em;
+            margin-top: 16px;
+            font-weight: bold;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Snake Game</h1>
+    <div id="gameContainer">
+        <div id="modeSelect">
+            Mode:
+            <select id="mode">
+                <option value="classic">Classic</option>
+                <option value="noWalls">No Walls</option>
+                <option value="fast">Fast</option>
+                <option value="hard">Hard</option>
+            </select>
+        </div>
+        <canvas id="gameCanvas" width="400" height="400"></canvas>
+        <div id="score">Score: 0</div>
+        <button id="restartBtn">Restart</button>
+        <div id="gameOver">Game Over!</div>
+    </div>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreEl = document.getElementById('score');
+        const modeEl = document.getElementById('mode');
+        const restartBtn = document.getElementById('restartBtn');
+        const gameOverEl = document.getElementById('gameOver');
+
+        // Game settings
+        const gridSize = 20;
+        const tileCount = canvas.width / gridSize;
+
+        // Modes
+        const modes = {
+            classic: { speed: 120, walls: true, hard: false },
+            noWalls: { speed: 120, walls: false, hard: false },
+            fast: { speed: 60, walls: true, hard: false },
+            hard: { speed: 90, walls: true, hard: true }
+        };
+
+        let mode = 'classic';
+        let speed = modes[mode].speed;
+        let walls = modes[mode].walls;
+        let hard = modes[mode].hard;
+
+        // Game state
+        let snake, direction, nextDirection, food, score, gameOver, interval;
+
+        function initGame() {
+            snake = [
+                { x: 8, y: 10 },
+                { x: 7, y: 10 },
+                { x: 6, y: 10 }
+            ];
+            direction = 'right';
+            nextDirection = 'right';
+            placeFood();
+            score = 0;
+            gameOver = false;
+            scoreEl.textContent = 'Score: 0';
+            gameOverEl.style.display = 'none';
+            clearInterval(interval);
+            interval = setInterval(gameLoop, speed);
+        }
+
+        function placeFood() {
+            let valid = false;
+            while (!valid) {
+                food = {
+                    x: Math.floor(Math.random() * tileCount),
+                    y: Math.floor(Math.random() * tileCount)
+                };
+                valid = !snake.some(seg => seg.x === food.x && seg.y === food.y);
+            }
+        }
+
+        function gameLoop() {
+            if (gameOver) return;
+            update();
+            draw();
+        }
+
+        function update() {
+            direction = nextDirection;
+            const head = { ...snake[0] };
+            if (direction === 'left') head.x--;
+            if (direction === 'right') head.x++;
+            if (direction === 'up') head.y--;
+            if (direction === 'down') head.y++;
+
+            // Wall collision
+            if (walls) {
+                if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
+                    endGame();
+                    return;
+                }
+            } else {
+                // Wrap around
+                head.x = (head.x + tileCount) % tileCount;
+                head.y = (head.y + tileCount) % tileCount;
+            }
+
+            // Self collision
+            if (snake.some(seg => seg.x === head.x && seg.y === head.y)) {
+                endGame();
+                return;
+            }
+
+            snake.unshift(head);
+
+            // Food collision
+            if (head.x === food.x && head.y === food.y) {
+                score++;
+                scoreEl.textContent = 'Score: ' + score;
+                placeFood();
+                // Hard mode: shrink snake on food
+                if (hard && snake.length > 3) {
+                    snake.pop();
+                }
+            } else {
+                snake.pop();
+            }
+        }
+
+        function draw() {
+            // Clear
+            ctx.fillStyle = '#181818';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw food
+            ctx.fillStyle = '#ffb347';
+            ctx.shadowColor = '#ffb347';
+            ctx.shadowBlur = 10;
+            ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize, gridSize);
+            ctx.shadowBlur = 0;
+
+            // Draw snake
+            for (let i = 0; i < snake.length; i++) {
+                ctx.fillStyle = i === 0 ? '#66ff99' : '#44cc88';
+                ctx.strokeStyle = '#222';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.rect(snake[i].x * gridSize, snake[i].y * gridSize, gridSize, gridSize);
+                ctx.fill();
+                ctx.stroke();
+            }
+        }
+
+        function endGame() {
+            gameOver = true;
+            clearInterval(interval);
+            gameOverEl.style.display = 'block';
+        }
+
+        document.addEventListener('keydown', e => {
+            if (gameOver) return;
+            if (e.key === 'ArrowLeft' && direction !== 'right') nextDirection = 'left';
+            if (e.key === 'ArrowRight' && direction !== 'left') nextDirection = 'right';
+            if (e.key === 'ArrowUp' && direction !== 'down') nextDirection = 'up';
+            if (e.key === 'ArrowDown' && direction !== 'up') nextDirection = 'down';
+        });
+
+        modeEl.addEventListener('change', () => {
+            mode = modeEl.value;
+            speed = modes[mode].speed;
+            walls = modes[mode].walls;
+            hard = modes[mode].hard;
+            initGame();
+        });
+
+        restartBtn.addEventListener('click', initGame);
+
+        // Start game
+        initGame();
+    </script>
+</body>
+</html>
