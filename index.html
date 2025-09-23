@@ -13,6 +13,7 @@
         html, body { height: 100%; margin: 0; background-color: #000; color: #fff; }
         body { display: flex; align-items: center; justify-content: center; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
         .container { padding: 2rem; text-align: center; max-width: 900px; }
+        .topleft { position: absolute; top: 8px; left: 16px; font-size: 20px; }
     .games-list { display: flex; flex-direction: column; gap: 12px; align-items: center; margin-top: 1rem; }
     .game-btn { background: #111; color: #fff; border: 1px solid #444; padding: 12px 16px; border-radius: 8px; cursor: pointer; font-size: 1rem; width: 100%; max-width: 480px; }
         .game-btn:hover { background: #222; }
@@ -22,6 +23,9 @@
 <body>
     <div class="container">
         <h1>Welcome to BearVsPython browser games</h1>
+        <div id="topleft">
+            <button class="source-btn" onclick="window.open('https://github.com/BearVsPython/htmlGames', '_blank')">Source Code</button>
+        </div>
         <div id="games-container">
             <div id="games" class="games-list">
                 <button class="game-btn" onclick="window.open('games/minecraft/1.8.8 js/index.html', '_blank')">Minecraft 1.8.8 js</button>
